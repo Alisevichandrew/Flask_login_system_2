@@ -3,9 +3,10 @@ import uuid
 import pymongo
 from passlib.hash import pbkdf2_sha256
 from user.models import User
-# from app import db
+
 
 app = Flask(__name__)
+app.secret_key = b'Z\x864\x94\x8a\xf2\x92\x1c\xb1&\xda\xff\x84\xdfc\x8c'
 
 #Data base e.g "MongoDB Compass"
 client = pymongo.MongoClient('localhost', 27017)
@@ -13,6 +14,11 @@ db = client.user_login_system #this name we will see in e.g. "MongoDB Compass"
 
 # Create the user object
 class User:
+  def start_session(self, user):
+    session['logged_in'] = True
+    session['user'] = user
+    return jsonify(user), 200
+
 
   def signup(self):
     print(request.form) #open 'User data' in terminal by VS code
@@ -32,7 +38,8 @@ class User:
         return jsonify({"error": "Email address already in use"}), 400
 
     if db.users.insert_one(user): 
-        return jsonify(user), 200
+        return self.start_session(user)
+        
 
     return jsonify({ "error": "Signup failed" }), 400
 
@@ -57,5 +64,3 @@ app.run(port=5000)
 
 if __name__ == "__main__":
   app.run(debug=True)
-
-
