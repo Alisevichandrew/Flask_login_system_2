@@ -1,3 +1,5 @@
+from functools import wraps
+from xmlrpc.client import WRAPPERS
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import uuid
 import pymongo
@@ -12,7 +14,16 @@ app.secret_key = b'Z\x864\x94\x8a\xf2\x92\x1c\xb1&\xda\xff\x84\xdfc\x8c'
 client = pymongo.MongoClient('localhost', 27017)
 db = client.user_login_system #this name we will see in e.g. "MongoDB Compass"
 
+#Decorators
+def login_required(f):
+  @wraps(f)
+  def wrap(*args, **kwargs):
+    if 'logged_in' in session:
+     return f(*args, **kwargs)
+    else:
+     return redirect('/')
 
+  return wrap
 
 # Create the user object
 class User:
@@ -62,6 +73,7 @@ def home():
     return render_template('base.html')
 
 @app.route('/dashboard/') 
+@login_required
 def dashboard():
     return render_template('dashboard.html')
 
