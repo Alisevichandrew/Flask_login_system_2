@@ -1,20 +1,23 @@
-from flask import Flask, render_template, request, url_for, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import uuid
 import pymongo
 from passlib.hash import pbkdf2_sha256
 from user.models import User
 
-
 app = Flask(__name__)
 app.secret_key = b'Z\x864\x94\x8a\xf2\x92\x1c\xb1&\xda\xff\x84\xdfc\x8c'
+#generation by command in terminal:> python -c 'import os; print(os.urandom(16))'
 
 #Data base e.g "MongoDB Compass"
 client = pymongo.MongoClient('localhost', 27017)
 db = client.user_login_system #this name we will see in e.g. "MongoDB Compass"
 
+
+
 # Create the user object
 class User:
   def start_session(self, user):
+    del user['password']
     session['logged_in'] = True
     session['user'] = user
     return jsonify(user), 200
@@ -43,24 +46,36 @@ class User:
 
     return jsonify({ "error": "Signup failed" }), 400
 
+  def signout(self):
+    session.clear()
+    return redirect('/')
+
 # Routes
+from user import routes
+
 @app.route('/')  
 def base():
-    return render_template('base.html')
-
-@app.route('/home/') 
-def home():
     return render_template('home.html')
+
+@app.route('/base/') 
+def home():
+    return render_template('base.html')
 
 @app.route('/dashboard/') 
 def dashboard():
     return render_template('dashboard.html')
 
+# imitation of "file" routes.py
 @app.route('/user/signup/', methods=['POST'])
 def signup():
     return User().signup()
 
+@app.route('/user/signout')
+def signout():
+    return User().signout()
+
+#Running on http://127.0.0.1:5000/
 app.run(port=5000)
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
   app.run(debug=True)
