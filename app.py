@@ -61,6 +61,18 @@ class User:
     session.clear()
     return redirect('/')
 
+ 
+  def login(self):
+
+    user = db.users.find_one({
+      "email": request.form.get('email')
+    })
+
+    if user and pbkdf2_sha256.verify(request.form.get('password'), user['password']):
+      return self.start_session(user)
+
+    return jsonify({"error": "Invalid login credentials" }), 401 
+
 # Routes
 from user import routes
 
@@ -78,7 +90,7 @@ def dashboard():
     return render_template('dashboard.html')
 
 # imitation of "file" routes.py
-@app.route('/user/signup/', methods=['POST'])
+@app.route('/user/signup', methods=['POST'])
 def signup():
     return User().signup()
 
@@ -86,7 +98,11 @@ def signup():
 def signout():
     return User().signout()
 
-#Running on http://127.0.0.1:5000/
+@app.route('/user/Login', methods=['POST'])
+def login():
+    return User().login()
+
+
 app.run(port=5000)
 
 if __name__ == "__main__": 
